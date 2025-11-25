@@ -1,0 +1,11 @@
+{
+  "name": "sen-diabete",
+  "version": "1.0.0",
+  "description": "Plateforme de suivi glycémique",
+  "scripts": {
+    "deploy": "wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
