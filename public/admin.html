@@ -441,25 +441,23 @@
             endDate.setMonth(endDate.getMonth() + licenseInfo.duration);
             
             const newLicense = {
-                id: Date.now(),
-                doctorName: document.getElementById('doctorName').value,
-                doctorEmail: document.getElementById('doctorEmail').value,
-                doctorPhone: document.getElementById('doctorPhone').value,
-                practiceLocation: document.getElementById('practiceLocation').value,
-                // Dans l'objet newLicense, ajoutez :
-                password: document.getElementById('doctorPassword').value,
-                licenseType: licenseType,
-                licenseName: licenseInfo.name,
-                price: licenseInfo.price,
-                photosTotal: licenseInfo.photos,
-                photosUsed: 0,
-                paymentMethod: document.getElementById('paymentMethod').value,
-                paymentReference: document.getElementById('paymentReference').value,
-                startDate: startDate.toISOString(),
-                endDate: endDate.toISOString(),
-                createdAt: new Date().toISOString()
-            };
-            
+    id: Date.now(),
+    doctorName: document.getElementById('doctorName').value,
+    doctorEmail: document.getElementById('doctorEmail').value,
+    doctorPhone: document.getElementById('doctorPhone').value,
+    doctorPassword: document.getElementById('doctorPassword').value, // ← NOUVEAU
+    practiceLocation: document.getElementById('practiceLocation').value,
+    licenseType: licenseType,
+    licenseName: licenseInfo.name,
+    price: licenseInfo.price,
+    photosTotal: licenseInfo.photos,
+    photosUsed: 0,
+    paymentMethod: document.getElementById('paymentMethod').value,
+    paymentReference: document.getElementById('paymentReference').value,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    createdAt: new Date().toISOString()
+};
             // Sauvegarder la licence admin
             let licenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
             licenses.push(newLicense);
