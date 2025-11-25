@@ -174,6 +174,7 @@
     }
     
     console.log('🔍 Recherche licence pour:', email);
+    console.log('🔐 Mot de passe saisi:', password);
     
     // Méthode 1 : Chercher dans les licences admin
     const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
@@ -189,17 +190,11 @@
     
     // DEBUG - Afficher tous les champs de la licence
     console.log('🐛 DEBUG - Tous les champs licence:', Object.keys(userLicense));
-    console.log('🔐 Mot de passe saisi:', password);
-    console.log('🔑 MotdePasse stocké:', userLicense.password || userLicense.doctorPassword);
+    console.log('🔑 Mot de passe stocké:', userLicense.password);
+    console.log('✅ Correspondance:', userLicense.password === password);
     
-    // Vérifier le mot de passe (les deux champs possibles)
-    const storedPassword = userLicense.password || userLicense.doctorPassword;
-    if (!storedPassword) {
-        alert('❌ Erreur: Aucun mot de passe défini pour cette licence.');
-        return;
-    }
-    
-    if (storedPassword !== password) {
+    // Vérifier le mot de passe
+    if (userLicense.password !== password) {
         alert('❌ Mot de passe incorrect.\n\nUtilisez le mot de passe fourni par l\'administrateur.');
         return;
     }
@@ -212,6 +207,8 @@
         alert('⚠️ Votre licence a expiré le ' + expiryDate.toLocaleDateString('fr-FR') + '\n\nContactez l\'administrateur pour renouveler.');
         return;
     }
+    
+    console.log('✅ Licence valide, création de l\'état utilisateur...');
     
     // Créer l'état utilisateur à partir de la licence admin
     const userState = {
@@ -238,9 +235,10 @@
     localStorage.setItem('senDiabeteState', JSON.stringify(userState));
     localStorage.setItem('currentUserEmail', email);
     
-    console.log('✅ Connexion réussie, redirection...');
+    console.log('💾 Données sauvegardées dans localStorage');
+    console.log('🔄 Redirection vers index.html...');
     
-    // Redirection vers la plateforme
+    // Redirection FORCÉE vers la plateforme
     window.location.href = 'index.html';
 });
 
