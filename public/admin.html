@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #2c7fb8;
+            --primary-blue: #6a8dff;
+            --primary-mauve: #b19fff;
+            --gradient: linear-gradient(135deg, #6a8dff 0%, #b19fff 100%);
         }
         
         body {
@@ -17,7 +19,7 @@
         }
         
         .admin-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
         }
@@ -30,28 +32,45 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 1.5rem;
         }
+        
+        .nav-tabs .nav-link.active {
+            background: var(--gradient);
+            color: white;
+            border: none;
+        }
+        
+        .license-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-active { background-color: #d4edda; color: #155724; }
+        .badge-expired { background-color: #f8d7da; color: #721c24; }
+        .badge-pending { background-color: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="login.html">
-                <img src="./assets/logo.png" alt="SEN'Diabète" height="40">
-                SEN'Diabète - Admin
+                <img src="https://i.postimg.cc/pThbptsh/Logo-V2.png" alt="SEN'Diabète" height="40">
+                SEN'Diabète - Administration
             </a>
         </div>
     </nav>
 
     <div class="admin-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Administration</h1>
+            <h1>Tableau de Bord Administrateur</h1>
             <a href="login.html" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Retour
+                <i class="fas fa-arrow-left me-2"></i>Retour connexion
             </a>
         </div>
 
         <!-- Formulaire de connexion admin -->
-        <div class="row justify-content-center">
+        <div class="row justify-content-center" id="adminLoginSection">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -82,17 +101,18 @@
 
         <!-- Dashboard Admin (caché par défaut) -->
         <div id="adminDashboard" style="display: none;">
+            <!-- Statistiques -->
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="h2 text-primary mb-0" id="totalUsers">0</div>
-                        <div class="text-muted">Utilisateurs</div>
+                        <div class="text-muted">Médecins inscrits</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="h2 text-success mb-0" id="totalRevenue">0 FCFA</div>
-                        <div class="text-muted">Revenus</div>
+                        <div class="text-muted">Revenus totaux</div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -109,33 +129,141 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Utilisateurs & Licences</h5>
-                    <button class="btn btn-sm btn-light" onclick="refreshAdminData()">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+            <!-- Navigation -->
+            <ul class="nav nav-tabs mb-4" id="adminTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#licensesTab">
+                        <i class="fas fa-key me-2"></i>Gestion des Licences
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#createLicenseTab">
+                        <i class="fas fa-plus-circle me-2"></i>Créer une Licence
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Onglet Gestion des Licences -->
+                <div class="tab-pane fade show active" id="licensesTab">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Licences Actives</h5>
+                            <button class="btn btn-sm btn-light" onclick="refreshAdminData()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Médecin</th>
+                                            <th>Téléphone</th>
+                                            <th>Lieu d'exercice</th>
+                                            <th>Licence</th>
+                                            <th>Paiement</th>
+                                            <th>Validité</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="licensesTable">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-4">
+                                                Aucune licence créée
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Utilisateur</th>
-                                    <th>Email</th>
-                                    <th>Licence</th>
-                                    <th>Photos utilisées</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTable">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        Aucune donnée
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                <!-- Onglet Création de Licence -->
+                <div class="tab-pane fade" id="createLicenseTab">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Créer une Nouvelle Licence</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="createLicenseForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Informations Médecin</h6>
+                                        <div class="mb-3">
+                                            <label class="form-label">Nom complet *</label>
+                                            <input type="text" class="form-control" id="doctorName" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Email professionnel *</label>
+                                            <input type="email" class="form-control" id="doctorEmail" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone *</label>
+                                            <input type="tel" class="form-control" id="doctorPhone" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Lieu d'exercice *</label>
+                                            <select class="form-control" id="practiceLocation" required>
+                                                <option value="">Sélectionnez...</option>
+                                                <option value="cabinet_privé">Cabinet Privé</option>
+                                                <option value="hopital_public">Hôpital Public</option>
+                                                <option value="clinique_privee">Clinique Privée</option>
+                                                <option value="centre_sante">Centre de Santé</option>
+                                                <option value="autre">Autre</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <h6>Détails de la Licence</h6>
+                                        <div class="mb-3">
+                                            <label class="form-label">Type de licence *</label>
+                                            <select class="form-control" id="licenseType" required onchange="updateLicenseDetails()">
+                                                <option value="">Sélectionnez...</option>
+                                                <option value="basic">Basique - 5.000 FCFA (20 photos)</option>
+                                                <option value="pro">Professionnel - 20.000 FCFA (250 photos)</option>
+                                                <option value="enterprise">Structure Santé - 250.000 FCFA (Illimité)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Mode de paiement *</label>
+                                            <select class="form-control" id="paymentMethod" required>
+                                                <option value="">Sélectionnez...</option>
+                                                <option value="wave">Wave</option>
+                                                <option value="orange_money">Orange Money</option>
+                                                <option value="virement">Virement Bancaire</option>
+                                                <option value="especes">Espèces</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Référence paiement</label>
+                                            <input type="text" class="form-control" id="paymentReference" placeholder="Numéro de transaction">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Date de début *</label>
+                                            <input type="date" class="form-control" id="startDate" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Date de fin</label>
+                                            <input type="text" class="form-control" id="endDate" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-save me-2"></i>Créer la Licence
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,6 +277,13 @@
             password: 'Admin@SD#2025&'
         };
 
+        const LICENSE_TYPES = {
+            'basic': { name: 'Basique', price: 5000, photos: 20, duration: 6 },
+            'pro': { name: 'Professionnel', price: 20000, photos: 250, duration: 6 },
+            'enterprise': { name: 'Structure Santé', price: 250000, photos: 9999, duration: 12 }
+        };
+
+        // Connexion Admin
         document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -156,85 +291,218 @@
             const password = document.getElementById('adminPassword').value;
             
             if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-                document.getElementById('adminLoginForm').style.display = 'none';
+                document.getElementById('adminLoginSection').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'block';
-                loadAdminData();
+                initializeAdminData();
+                setDefaultDates();
             } else {
                 alert('Identifiants administrateur incorrects');
             }
         });
 
-        function loadAdminData() {
-            // Simulation des données admin
-            const adminData = {
-                totalUsers: 1,
-                totalRevenue: 0,
-                activeLicenses: 0,
-                photosAnalyzed: 0,
-                users: []
-            };
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            updateLicenseDetails();
+        }
 
-            // Récupérer les données utilisateur depuis le localStorage
-            try {
-                const userState = localStorage.getItem('senDiabeteState');
-                if (userState) {
-                    const state = JSON.parse(userState);
-                    adminData.totalUsers = 1;
-                    adminData.activeLicenses = state.license && state.license.type !== 'none' ? 1 : 0;
-                    adminData.photosAnalyzed = state.analyses ? state.analyses.length : 0;
-                    
-                    if (state.license && state.license.type !== 'none') {
-                        const prices = { 'basic': 5000, 'pro': 20000, 'enterprise': 250000 };
-                        adminData.totalRevenue = prices[state.license.type] || 0;
-                    }
-                    
-                    adminData.users = [{
-                        name: state.user ? state.user.name : 'Utilisateur',
-                        email: state.user ? state.user.email : 'N/A',
-                        license: state.license ? state.license.type : 'none',
-                        photosUsed: state.license ? state.license.photosUsed : 0,
-                        photosTotal: state.license ? state.license.photosTotal : 0,
-                        status: state.license && state.license.type !== 'none' ? 'Active' : 'Inactive'
-                    }];
-                }
-            } catch (error) {
-                console.error('Erreur chargement données:', error);
+        function updateLicenseDetails() {
+            const licenseType = document.getElementById('licenseType').value;
+            const startDate = document.getElementById('startDate').value;
+            
+            if (licenseType && startDate) {
+                const licenseInfo = LICENSE_TYPES[licenseType];
+                const start = new Date(startDate);
+                const end = new Date(start);
+                end.setMonth(end.getMonth() + licenseInfo.duration);
+                
+                document.getElementById('endDate').value = end.toLocaleDateString('fr-FR');
             }
+        }
 
+        function initializeAdminData() {
+            const adminData = getAdminData();
             updateAdminUI(adminData);
         }
 
-        function updateAdminUI(data) {
-            document.getElementById('totalUsers').textContent = data.totalUsers;
-            document.getElementById('totalRevenue').textContent = data.totalRevenue.toLocaleString() + ' FCFA';
-            document.getElementById('activeLicenses').textContent = data.activeLicenses;
-            document.getElementById('photosAnalyzed').textContent = data.photosAnalyzed;
+        function getAdminData() {
+            let licenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
             
-            const tbody = document.getElementById('usersTable');
-            if (data.users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Aucune donnée</td></tr>';
+            const stats = {
+                totalUsers: licenses.length,
+                totalRevenue: licenses.reduce((sum, license) => sum + license.price, 0),
+                activeLicenses: licenses.filter(l => new Date(l.endDate) > new Date()).length,
+                photosAnalyzed: licenses.reduce((sum, license) => sum + license.photosUsed, 0)
+            };
+            
+            return { licenses, stats };
+        }
+
+        function updateAdminUI(data) {
+            // Mise à jour des statistiques
+            document.getElementById('totalUsers').textContent = data.stats.totalUsers;
+            document.getElementById('totalRevenue').textContent = data.stats.totalRevenue.toLocaleString() + ' FCFA';
+            document.getElementById('activeLicenses').textContent = data.stats.activeLicenses;
+            document.getElementById('photosAnalyzed').textContent = data.stats.photosAnalyzed;
+            
+            // Mise à jour du tableau des licences
+            updateLicensesTable(data.licenses);
+        }
+
+        function updateLicensesTable(licenses) {
+            const tbody = document.getElementById('licensesTable');
+            
+            if (licenses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Aucune licence créée</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = data.users.map(user => `
-                <tr>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td>${user.license === 'none' ? 'Aucune' : user.license}</td>
-                    <td>${user.photosUsed}/${user.photosTotal}</td>
-                    <td>
-                        <span class="badge ${user.status === 'Active' ? 'bg-success' : 'bg-secondary'}">
-                            ${user.status}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = licenses.map((license, index) => {
+                const isActive = new Date(license.endDate) > new Date();
+                const statusClass = isActive ? 'badge-active' : 'badge-expired';
+                const statusText = isActive ? 'Active' : 'Expirée';
+                
+                return `
+                    <tr>
+                        <td>
+                            <strong>${license.doctorName}</strong><br>
+                            <small class="text-muted">${license.doctorEmail}</small>
+                        </td>
+                        <td>${license.doctorPhone}</td>
+                        <td>${getPracticeLocationText(license.practiceLocation)}</td>
+                        <td>
+                            ${license.licenseName}<br>
+                            <small class="text-muted">${license.price.toLocaleString()} FCFA</small>
+                        </td>
+                        <td>
+                            ${getPaymentMethodText(license.paymentMethod)}<br>
+                            <small class="text-muted">${license.paymentReference || 'N/A'}</small>
+                        </td>
+                        <td>
+                            ${new Date(license.startDate).toLocaleDateString('fr-FR')}<br>
+                            <small>au ${new Date(license.endDate).toLocaleDateString('fr-FR')}</small>
+                        </td>
+                        <td>
+                            <span class="license-badge ${statusClass}">${statusText}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteLicense(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getPracticeLocationText(location) {
+            const locations = {
+                'cabinet_privé': 'Cabinet Privé',
+                'hopital_public': 'Hôpital Public',
+                'clinique_privee': 'Clinique Privée',
+                'centre_sante': 'Centre de Santé',
+                'autre': 'Autre'
+            };
+            return locations[location] || location;
+        }
+
+        function getPaymentMethodText(method) {
+            const methods = {
+                'wave': 'Wave',
+                'orange_money': 'Orange Money',
+                'virement': 'Virement',
+                'especes': 'Espèces'
+            };
+            return methods[method] || method;
+        }
+
+        // Création de licence
+        document.getElementById('createLicenseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const licenseType = document.getElementById('licenseType').value;
+            if (!licenseType) {
+                alert('Veuillez sélectionner un type de licence');
+                return;
+            }
+            
+            const licenseInfo = LICENSE_TYPES[licenseType];
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + licenseInfo.duration);
+            
+            const newLicense = {
+                id: Date.now(),
+                doctorName: document.getElementById('doctorName').value,
+                doctorEmail: document.getElementById('doctorEmail').value,
+                doctorPhone: document.getElementById('doctorPhone').value,
+                practiceLocation: document.getElementById('practiceLocation').value,
+                licenseType: licenseType,
+                licenseName: licenseInfo.name,
+                price: licenseInfo.price,
+                photosTotal: licenseInfo.photos,
+                photosUsed: 0,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                paymentReference: document.getElementById('paymentReference').value,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            
+            // Sauvegarder la licence admin
+            let licenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+            licenses.push(newLicense);
+            localStorage.setItem('adminLicenses', JSON.stringify(licenses));
+            
+            // Créer également l'état utilisateur
+            const userState = {
+                user: {
+                    name: newLicense.doctorName,
+                    email: newLicense.doctorEmail,
+                    phone: newLicense.doctorPhone,
+                    practiceLocation: newLicense.practiceLocation
+                },
+                license: {
+                    type: newLicense.licenseType,
+                    photosUsed: 0,
+                    photosTotal: newLicense.photosTotal,
+                    expiryDate: newLicense.endDate,
+                    purchasedAt: new Date().toISOString(),
+                    paymentMethod: newLicense.paymentMethod
+                },
+                analyses: []
+            };
+            
+            // Sauvegarder l'état utilisateur avec une clé basée sur l'email
+            localStorage.setItem(`senDiabeteState_${newLicense.doctorEmail}`, JSON.stringify(userState));
+            
+            alert('Licence créée avec succès ! Le médecin peut maintenant se connecter.');
+            document.getElementById('createLicenseForm').reset();
+            setDefaultDates();
+            initializeAdminData();
+            
+            // Revenir à l'onglet des licences
+            new bootstrap.Tab(document.querySelector('#licensesTab')).show();
+        });
+
+        function deleteLicense(index) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette licence ?')) {
+                let licenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+                licenses.splice(index, 1);
+                localStorage.setItem('adminLicenses', JSON.stringify(licenses));
+                initializeAdminData();
+                alert('Licence supprimée avec succès');
+            }
         }
 
         function refreshAdminData() {
-            loadAdminData();
+            initializeAdminData();
             alert('Données actualisées');
         }
+
+        // Écouteurs pour les mises à jour automatiques
+        document.getElementById('licenseType').addEventListener('change', updateLicenseDetails);
+        document.getElementById('startDate').addEventListener('change', updateLicenseDetails);
     </script>
 </body>
 </html>
