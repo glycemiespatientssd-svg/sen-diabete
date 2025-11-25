@@ -236,7 +236,15 @@
     localStorage.setItem('currentUserEmail', email);
     
     console.log('💾 Données sauvegardées dans localStorage');
-    console.log('🔄 Redirection vers index.html...');
+    // Après connexion réussie
+console.log('🔄 Redirection sécurisée vers index.html...');
+
+// Nettoyer l'URL pour éviter les boucles
+const cleanUrl = new URL('/index.html', window.location.origin);
+cleanUrl.searchParams.set('t', Date.now()); // Timestamp anti-cache
+
+// Redirection sécurisée
+window.location.replace(cleanUrl.toString());
     
     // Redirection FORCÉE vers la plateforme
     window.location.href = 'index.html';
