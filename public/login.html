@@ -162,7 +162,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-       document.getElementById('loginForm').addEventListener('submit', function(e) {
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
@@ -187,8 +187,19 @@
         return;
     }
     
-    // Vérifier le mot de passe
-    if (userLicense.password !== password) {
+    // DEBUG - Afficher tous les champs de la licence
+    console.log('🐛 DEBUG - Tous les champs licence:', Object.keys(userLicense));
+    console.log('🔐 Mot de passe saisi:', password);
+    console.log('🔑 MotdePasse stocké:', userLicense.password || userLicense.doctorPassword);
+    
+    // Vérifier le mot de passe (les deux champs possibles)
+    const storedPassword = userLicense.password || userLicense.doctorPassword;
+    if (!storedPassword) {
+        alert('❌ Erreur: Aucun mot de passe défini pour cette licence.');
+        return;
+    }
+    
+    if (storedPassword !== password) {
         alert('❌ Mot de passe incorrect.\n\nUtilisez le mot de passe fourni par l\'administrateur.');
         return;
     }
