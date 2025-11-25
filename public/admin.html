@@ -216,38 +216,39 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Mot de passe personnalisé *</label>
-                                        <input type="text" class="form-control" id="doctorPassword" required 
-                                           placeholder="Nom@SD#2025" pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!])(?=.{8,}).*$"
-                                           title="8 caractères minimum, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial">
-                                        <small class="form-text text-muted">
-                                            Format: 8 caractères, majuscule, minuscule, chiffre, caractère spécial
-                                            </small>
-                                    </div>
-                                    
                                     <div class="col-md-6">
-                                        <h6>Détails de la Licence</h6>
-                                        <div class="mb-3">
-                                            <label class="form-label">Type de licence *</label>
-                                            <select class="form-control" id="licenseType" required onchange="updateLicenseDetails()">
-                                                <option value="">Sélectionnez...</option>
-                                                <option value="basic">Basique - 5.000 FCFA (20 photos)</option>
-                                                <option value="pro">Professionnel - 20.000 FCFA (250 photos)</option>
-                                                <option value="enterprise">Structure Santé - 250.000 FCFA (Illimité)</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label">Mode de paiement *</label>
-                                            <select class="form-control" id="paymentMethod" required>
-                                                <option value="">Sélectionnez...</option>
-                                                <option value="wave">Wave</option>
-                                                <option value="orange_money">Orange Money</option>
-                                                <option value="virement">Virement Bancaire</option>
-                                                <option value="especes">Espèces</option>
-                                            </select>
-                                        </div>
+    <h6>Détails de la Licence</h6>
+    <div class="mb-3">
+        <label class="form-label">Type de licence *</label>
+        <select class="form-control" id="licenseType" required onchange="updateLicenseDetails()">
+            <option value="">Sélectionnez...</option>
+            <option value="basic">Basique - 5.000 FCFA (20 photos)</option>
+            <option value="pro">Professionnel - 20.000 FCFA (250 photos)</option>
+            <option value="enterprise">Structure Santé - 250.000 FCFA (Illimité)</option>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Mot de passe personnalisé *</label>
+        <input type="text" class="form-control" id="doctorPassword" required 
+               placeholder="Dupont@SD#2025" pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!])(?=.{8,}).*$"
+               title="8 caractères minimum, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial">
+        <small class="form-text text-muted">
+            Exemple: Dupont@SD#2025 - Le médecin utilisera ce mot de passe pour se connecter
+        </small>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Mode de paiement *</label>
+        <select class="form-control" id="paymentMethod" required>
+            <option value="">Sélectionnez...</option>
+            <option value="wave">Wave</option>
+            <option value="orange_money">Orange Money</option>
+            <option value="virement">Virement Bancaire</option>
+            <option value="especes">Espèces</option>
+        </select>
+    </div>
+
                                         
                                         <div class="mb-3">
                                             <label class="form-label">Référence paiement</label>
