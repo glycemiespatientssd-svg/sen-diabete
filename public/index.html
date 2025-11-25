@@ -114,7 +114,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <img src="./assets/logo.png" alt="SEN'Diabète">
+                <img src="https://i.postimg.cc/pThbptsh/Logo-V2.png" alt="SEN'Diabète">
                 SEN'Diabète
             </a>
             <div class="navbar-nav ms-auto">
@@ -551,14 +551,13 @@
             });
         }
 
-        async function analyzeWithAI(base64Image) {
-  try {
-    const response = await fetch('/analyze-glycemia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageData: base64Image })
-    });
-
+           async function analyzeWithAI(base64Image) {
+              try {
+                const response = await fetch('/analyze-glycemia', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageData: base64Image })
+              });
                 if (!response.ok) throw new Error('Erreur serveur');
                 return await response.json();
             } catch (error) {
