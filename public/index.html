@@ -118,7 +118,7 @@
                 SEN'Diabète
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="login.html">
+                <a class="nav-link" href="#" onclick="logout()">
                     <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
                 </a>
             </div>
@@ -387,58 +387,55 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // Vérification PLUS STRICTE de l'authentification
-    const appState = localStorage.getItem('senDiabeteState');
-    const currentUserEmail = localStorage.getItem('currentUserEmail');
-    
-    console.log('🔐 Vérification authentification...');
-    console.log('📁 État application:', appState ? 'Présent' : 'Absent');
-    console.log('📧 Email utilisateur:', currentUserEmail);
-    
-    if (!appState || !currentUserEmail) {
-        console.log('🚫 Redirection vers login - Données manquantes');
-        // FORCER la redirection avec nettoyage
-        localStorage.removeItem('senDiabeteState');
-        localStorage.removeItem('currentUserEmail');
-        window.location.href = '/login.html';
-        return;
-    }
-    
-    try {
-        const state = JSON.parse(appState);
-        
-        // Vérifier que l'email correspond
-        if (state.user.email !== currentUserEmail) {
-            console.log('🚫 Email ne correspond pas - Redirection');
-            localStorage.removeItem('senDiabeteState');
-            localStorage.removeItem('currentUserEmail');
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        // Vérifier la licence
-        const expiryDate = new Date(state.license.expiryDate);
-        if (expiryDate < new Date()) {
-            alert('Votre licence a expiré. Contactez l\'administrateur.');
-            localStorage.removeItem('senDiabeteState');
-            localStorage.removeItem('currentUserEmail');
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        console.log('✅ Authentification réussie, chargement application');
-        loadAppState();
-        setupEventListeners();
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement état:', error);
-        localStorage.removeItem('senDiabeteState');
-        localStorage.removeItem('currentUserEmail');
-        window.location.href = '/login.html';
-    }
-});
-        
+        // Vérification STRICTE de l'authentification au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Vérification authentification...');
+            
+            const appState = localStorage.getItem('senDiabeteState');
+            const currentUserEmail = localStorage.getItem('currentUserEmail');
+            
+            if (!appState || !currentUserEmail) {
+                console.log('🚫 Non authentifié - Redirection vers login');
+                localStorage.removeItem('senDiabeteState');
+                localStorage.removeItem('currentUserEmail');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                const state = JSON.parse(appState);
+                
+                // Vérifier que l'email correspond
+                if (state.user.email !== currentUserEmail) {
+                    console.log('🚫 Email ne correspond pas - Redirection');
+                    localStorage.removeItem('senDiabeteState');
+                    localStorage.removeItem('currentUserEmail');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Vérifier la licence
+                const expiryDate = new Date(state.license.expiryDate);
+                if (expiryDate < new Date()) {
+                    alert('Votre licence a expiré. Contactez l\'administrateur.');
+                    localStorage.removeItem('senDiabeteState');
+                    localStorage.removeItem('currentUserEmail');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                console.log('✅ Authentification réussie');
+                loadAppState();
+                setupEventListeners();
+                
+            } catch (error) {
+                console.error('❌ Erreur chargement état:', error);
+                localStorage.removeItem('senDiabeteState');
+                localStorage.removeItem('currentUserEmail');
+                window.location.href = '/login.html';
+            }
+        });
+
         const LICENSE_PACKAGES = {
             'basic': { photos: 20, price: 5000 },
             'pro': { photos: 250, price: 20000 },
@@ -450,12 +447,6 @@
             license: { type: 'none', photosUsed: 0, photosTotal: 0, expiryDate: null },
             analyses: []
         };
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAppState();
-            setupEventListeners();
-        });
 
         function loadAppState() {
             const saved = localStorage.getItem('senDiabeteState');
@@ -603,16 +594,25 @@
             });
         }
 
-           async function analyzeWithAI(base64Image) {
-              try {
+        async function analyzeWithAI(base64Image) {
+            try {
+                console.log('🔍 Appel API analyse glycémie...');
                 const response = await fetch('/analyze-glycemia', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageData: base64Image })
-              });
-                if (!response.ok) throw new Error('Erreur serveur');
-                return await response.json();
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageData: base64Image })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur serveur: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Résultat analyse:', result);
+                return result;
+                
             } catch (error) {
+                console.error('❌ Erreur analyse:', error);
                 // Fallback simulation
                 return simulateAnalysis();
             }
@@ -784,6 +784,14 @@
 
         function saveState() {
             localStorage.setItem('senDiabeteState', JSON.stringify(appState));
+        }
+
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('senDiabeteState');
+                localStorage.removeItem('currentUserEmail');
+                window.location.href = '/login.html';
+            }
         }
     </script>
 </body>
