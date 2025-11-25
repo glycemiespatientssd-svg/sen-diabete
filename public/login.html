@@ -162,105 +162,99 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    if (!email || !password) {
-        alert('Veuillez remplir tous les champs obligatoires');
-        return;
-    }
-    
-    console.log('🔍 Recherche licence pour:', email);
-    console.log('🔐 Mot de passe saisi:', password);
-    
-    // Méthode 1 : Chercher dans les licences admin
-    const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
-    console.log('📋 Licences admin trouvées:', adminLicenses);
-    
-    const userLicense = adminLicenses.find(license => license.doctorEmail === email);
-    console.log('🎯 Licence trouvée:', userLicense);
-    
-    if (!userLicense) {
-        alert('❌ Aucune licence active trouvée pour cet email.\n\nContactez l\'administrateur pour activer votre compte.');
-        return;
-    }
-    
-    // DEBUG - Afficher tous les champs de la licence
-    console.log('🐛 DEBUG - Tous les champs licence:', Object.keys(userLicense));
-    console.log('🔑 Mot de passe stocké:', userLicense.password);
-    console.log('✅ Correspondance:', userLicense.password === password);
-    
-    // Vérifier le mot de passe
-    if (userLicense.password !== password) {
-        alert('❌ Mot de passe incorrect.\n\nUtilisez le mot de passe fourni par l\'administrateur.');
-        return;
-    }
-    
-    // Vérifier si la licence est expirée
-    const expiryDate = new Date(userLicense.endDate);
-    const today = new Date();
-    
-    if (expiryDate < today) {
-        alert('⚠️ Votre licence a expiré le ' + expiryDate.toLocaleDateString('fr-FR') + '\n\nContactez l\'administrateur pour renouveler.');
-        return;
-    }
-    
-    console.log('✅ Licence valide, création de l\'état utilisateur...');
-    
-    // Créer l'état utilisateur à partir de la licence admin
-    const userState = {
-        user: {
-            name: userLicense.doctorName,
-            email: userLicense.doctorEmail,
-            phone: userLicense.doctorPhone,
-            practiceLocation: userLicense.practiceLocation
-        },
-        license: {
-            type: userLicense.licenseType,
-            photosUsed: userLicense.photosUsed || 0,
-            photosTotal: userLicense.photosTotal,
-            expiryDate: userLicense.endDate,
-            purchasedAt: userLicense.createdAt,
-            paymentMethod: userLicense.paymentMethod
-        },
-        analyses: []
-    };
-    
-    console.log('💾 État utilisateur créé:', userState);
-    
-    // Sauvegarder pour la session
-    localStorage.setItem('senDiabeteState', JSON.stringify(userState));
-    localStorage.setItem('currentUserEmail', email);
-    
-    console.log('💾 Données sauvegardées dans localStorage');
-    // Après connexion réussie
-console.log('🔄 Redirection sécurisée vers index.html...');
+        // Nettoyage au chargement de la page login
+        localStorage.removeItem('senDiabeteState');
+        console.log('🧹 Nettoyage session précédente');
 
-// Nettoyer l'URL pour éviter les boucles
-const cleanUrl = new URL('/index.html', window.location.origin);
-cleanUrl.searchParams.set('t', Date.now()); // Timestamp anti-cache
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Veuillez remplir tous les champs obligatoires');
+                return;
+            }
+            
+            console.log('🔍 Recherche licence pour:', email);
+            
+            // Chercher dans les licences admin
+            const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+            console.log('📋 Licences admin trouvées:', adminLicenses.length);
+            
+            const userLicense = adminLicenses.find(license => 
+                license.doctorEmail.toLowerCase() === email.toLowerCase()
+            );
+            
+            if (!userLicense) {
+                alert('❌ Aucune licence active trouvée pour cet email.\n\nContactez l\'administrateur pour activer votre compte.');
+                return;
+            }
+            
+            console.log('🎯 Licence trouvée:', userLicense.doctorName);
+            console.log('🔑 Mot de passe stocké:', userLicense.password);
+            console.log('✅ Correspondance:', userLicense.password === password);
+            
+            // Vérifier le mot de passe
+            if (userLicense.password !== password) {
+                alert('❌ Mot de passe incorrect.\n\nUtilisez le mot de passe fourni par l\'administrateur.');
+                return;
+            }
+            
+            // Vérifier si la licence est expirée
+            const expiryDate = new Date(userLicense.endDate);
+            const today = new Date();
+            
+            if (expiryDate < today) {
+                alert('⚠️ Votre licence a expiré le ' + expiryDate.toLocaleDateString('fr-FR') + '\n\nContactez l\'administrateur pour renouveler.');
+                return;
+            }
+            
+            console.log('✅ Licence valide, création session...');
+            
+            // Créer l'état utilisateur à partir de la licence admin
+            const userState = {
+                user: {
+                    name: userLicense.doctorName,
+                    email: userLicense.doctorEmail,
+                    phone: userLicense.doctorPhone,
+                    practiceLocation: userLicense.practiceLocation
+                },
+                license: {
+                    type: userLicense.licenseType,
+                    photosUsed: userLicense.photosUsed || 0,
+                    photosTotal: userLicense.photosTotal,
+                    expiryDate: userLicense.endDate,
+                    purchasedAt: userLicense.createdAt,
+                    paymentMethod: userLicense.paymentMethod
+                },
+                analyses: []
+            };
+            
+            console.log('💾 Sauvegarde session utilisateur...');
+            
+            // Sauvegarder pour la session
+            localStorage.setItem('senDiabeteState', JSON.stringify(userState));
+            localStorage.setItem('currentUserEmail', userLicense.doctorEmail);
+            
+            console.log('🔄 Redirection vers la plateforme...');
+            
+            // Redirection FORCÉE avec timestamp pour éviter le cache
+            window.location.href = '/index.html?t=' + Date.now();
+        });
 
-// Redirection sécurisée
-window.location.replace(cleanUrl.toString());
-    
-    // Redirection FORCÉE vers la plateforme
-    window.location.href = 'index.html';
-});
-
-// Pré-remplir l'email si déjà connu
-document.addEventListener('DOMContentLoaded', function() {
-    const savedEmail = localStorage.getItem('currentUserEmail');
-    if (savedEmail) {
-        document.getElementById('email').value = savedEmail;
-    }
-    
-    // Debug : Afficher toutes les licences
-    const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
-    console.log('🐛 DEBUG - Toutes les licences:', adminLicenses);
-});
+        // Pré-remplir l'email si déjà connu
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedEmail = localStorage.getItem('currentUserEmail');
+            if (savedEmail) {
+                document.getElementById('email').value = savedEmail;
+            }
+            
+            // Debug : Afficher toutes les licences
+            const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+            console.log('🐛 DEBUG - Toutes les licences:', adminLicenses);
+        });
     </script>
 </body>
 </html>
