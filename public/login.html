@@ -163,50 +163,81 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                alert('Veuillez remplir tous les champs obligatoires');
-                return;
-            }
-            
-            // Vérifier si une licence existe pour cet email
-            const userStateKey = `senDiabeteState_${email}`;
-            const userState = localStorage.getItem(userStateKey);
-            
-            if (!userState) {
-                alert('❌ Aucune licence active trouvée pour cet email.\n\nContactez l\'administrateur pour activer votre compte.');
-                return;
-            }
-            
-            // Vérifier si la licence est expirée
-            const state = JSON.parse(userState);
-            const expiryDate = new Date(state.license.expiryDate);
-            const today = new Date();
-            
-            if (expiryDate < today) {
-                alert('⚠️ Votre licence a expiré le ' + expiryDate.toLocaleDateString('fr-FR') + '\n\nContactez l\'administrateur pour renouveler.');
-                return;
-            }
-            
-            // Sauvegarder l'état utilisateur pour la session
-            localStorage.setItem('senDiabeteState', JSON.stringify(state));
-            localStorage.setItem('currentUserEmail', email);
-            
-            // Redirection vers la plateforme
-            window.location.href = 'index.html';
-        });
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (!email || !password) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    console.log('🔍 Recherche licence pour:', email);
+    
+    // Méthode 1 : Chercher dans les licences admin
+    const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+    console.log('📋 Licences admin trouvées:', adminLicenses);
+    
+    const userLicense = adminLicenses.find(license => license.doctorEmail === email);
+    console.log('🎯 Licence trouvée:', userLicense);
+    
+    if (!userLicense) {
+        alert('❌ Aucune licence active trouvée pour cet email.\n\nContactez l\'administrateur pour activer votre compte.');
+        return;
+    }
+    
+    // Vérifier si la licence est expirée
+    const expiryDate = new Date(userLicense.endDate);
+    const today = new Date();
+    
+    if (expiryDate < today) {
+        alert('⚠️ Votre licence a expiré le ' + expiryDate.toLocaleDateString('fr-FR') + '\n\nContactez l\'administrateur pour renouveler.');
+        return;
+    }
+    
+    // Créer l'état utilisateur à partir de la licence admin
+    const userState = {
+        user: {
+            name: userLicense.doctorName,
+            email: userLicense.doctorEmail,
+            phone: userLicense.doctorPhone,
+            practiceLocation: userLicense.practiceLocation
+        },
+        license: {
+            type: userLicense.licenseType,
+            photosUsed: userLicense.photosUsed || 0,
+            photosTotal: userLicense.photosTotal,
+            expiryDate: userLicense.endDate,
+            purchasedAt: userLicense.createdAt,
+            paymentMethod: userLicense.paymentMethod
+        },
+        analyses: []
+    };
+    
+    console.log('💾 État utilisateur créé:', userState);
+    
+    // Sauvegarder pour la session
+    localStorage.setItem('senDiabeteState', JSON.stringify(userState));
+    localStorage.setItem('currentUserEmail', email);
+    
+    console.log('✅ Connexion réussie, redirection...');
+    
+    // Redirection vers la plateforme
+    window.location.href = 'index.html';
+});
 
-        // Pré-remplir l'email si déjà connu
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedEmail = localStorage.getItem('currentUserEmail');
-            if (savedEmail) {
-                document.getElementById('email').value = savedEmail;
-            }
-        });
+// Pré-remplir l'email si déjà connu
+document.addEventListener('DOMContentLoaded', function() {
+    const savedEmail = localStorage.getItem('currentUserEmail');
+    if (savedEmail) {
+        document.getElementById('email').value = savedEmail;
+    }
+    
+    // Debug : Afficher toutes les licences
+    const adminLicenses = JSON.parse(localStorage.getItem('adminLicenses') || '[]');
+    console.log('🐛 DEBUG - Toutes les licences:', adminLicenses);
+});
     </script>
 </body>
 </html>
