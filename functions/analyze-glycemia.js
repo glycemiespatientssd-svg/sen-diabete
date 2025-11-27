@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
   
-  console.log('🚀 Début analyse glycémie...');
+  console.log('🚀 Début analyse glycémie avec GPT-4o...');
   
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -10,13 +10,11 @@ export async function onRequestPost(context) {
     'Content-Type': 'application/json'
   };
 
-  // Gérer les pré-requêtes CORS
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Vérifier la méthode
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -27,7 +25,6 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Vérifier le content-type
     const contentType = request.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       return new Response(JSON.stringify({ 
@@ -56,50 +53,37 @@ export async function onRequestPost(context) {
 
     const OPENAI_API_KEY = env.OPENAI_API_KEY;
     
-    console.log('🔑 Clé API OpenAI:', OPENAI_API_KEY ? `Présente (${OPENAI_API_KEY.substring(0, 10)}...)` : 'MANQUANTE');
-    
     if (!OPENAI_API_KEY) {
-      console.error('❌ CLÉ API OPENAI MANQUANTE');
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Configuration serveur incomplète - Clé API manquante' 
+        error: 'Configuration serveur incomplète' 
       }), { 
         status: 500, 
         headers: corsHeaders 
       });
     }
 
-    // Vérifier le format de la clé API
-    if (!OPENAI_API_KEY.startsWith('sk-')) {
-      console.error('❌ Format de clé API invalide');
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Configuration serveur invalide - Format de clé incorrect' 
-      }), { 
-        status: 500, 
-        headers: corsHeaders 
-      });
-    }
+    console.log('🔗 Appel de GPT-4o Vision...');
 
-    console.log('🔗 Appel de l\'API OpenAI...');
+    const prompt = `Tu es un assistant médical spécialisé dans l'analyse de photos de lecteurs de glycémie (glucomètres).
 
-    const prompt = `ANALYSE CETTE PHOTO D'UN LECTEUR DE GLYCÉMIE (GLUCOMÈTRE).
+REGLE ABSOLUE : Réponds UNIQUEMENT avec le nombre affiché sur l'écran du glucomètre, sans aucune autre texte.
 
-INSTRUCTIONS TRÈS IMPORTANTES :
-1. Regarde l'écran du lecteur de glycémie
-2. Identifie le nombre affiché
-3. Retourne UNIQUEMENT le nombre en chiffres
-4. Si tu ne vois pas de nombre clair, retourne "Non lisible"
+INSTRUCTIONS :
+1. Examine attentivement l'écran du lecteur de glycémie
+2. Identifie la valeur numérique affichée
+3. Si la valeur est clairement lisible, retourne UNIQUEMENT le nombre
+4. Si l'image n'est pas un glucomètre ou si le nombre n'est pas lisible, retourne UNIQUEMENT "Non lisible"
 
-EXEMPLE DE RÉPONSES ATTENDUES :
+EXEMPLES DE RÉPONSES CORRECTES :
 - "112"
 - "85" 
 - "Non lisible"
 
-NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
+NE JAMAIS AJOUTER de texte explicatif, de commentaires, ou de ponctuation supplémentaire.`;
 
     const requestBody = {
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",  // ← CHANGEMENT CRITIQUE ICI
       messages: [{
         role: "user",
         content: [
@@ -116,11 +100,11 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
           }
         ]
       }],
-      max_tokens: 50,
+      max_tokens: 20,
       temperature: 0.1
     };
 
-    console.log('📤 Envoi requête à OpenAI...');
+    console.log('📤 Envoi requête à GPT-4o...');
     
     const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -131,49 +115,38 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
       body: JSON.stringify(requestBody)
     });
 
-    console.log('📡 Statut réponse OpenAI:', apiResponse.status);
+    console.log('📡 Statut réponse:', apiResponse.status);
 
     if (!apiResponse.ok) {
-      let errorMessage = `Erreur API OpenAI: ${apiResponse.status}`;
+      let errorMessage = `Erreur API: ${apiResponse.status}`;
       
       try {
         const errorData = await apiResponse.json();
-        console.error('❌ Détails erreur OpenAI:', errorData);
+        console.error('❌ Détails erreur:', errorData);
         
         if (errorData.error?.message) {
-          errorMessage = `OpenAI: ${errorData.error.message}`;
-        }
-        
-        // Gestion des erreurs spécifiques
-        if (apiResponse.status === 401) {
-          errorMessage = 'Clé API OpenAI invalide ou expirée';
-        } else if (apiResponse.status === 429) {
-          errorMessage = 'Quota API dépassé - Vérifiez votre compte OpenAI';
-        } else if (apiResponse.status === 500) {
-          errorMessage = 'Erreur interne du serveur OpenAI';
-        } else if (apiResponse.status === 404) {
-          errorMessage = 'Modèle GPT-4 Vision non disponible - Vérifiez votre abonnement';
+          errorMessage = errorData.error.message;
         }
       } catch (parseError) {
-        console.error('❌ Erreur parsing réponse:', parseError);
+        console.error('Erreur parsing:', parseError);
       }
       
       return new Response(JSON.stringify({
         success: false,
         error: errorMessage
       }), { 
-        status: 500, 
+        status: apiResponse.status, 
         headers: corsHeaders 
       });
     }
 
     const data = await apiResponse.json();
-    console.log('✅ Réponse OpenAI reçue avec succès');
+    console.log('✅ Réponse reçue de GPT-4o');
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.choices || !data.choices[0]?.message) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'Réponse OpenAI invalide'
+        error: 'Réponse invalide de l\'API'
       }), { 
         status: 500, 
         headers: corsHeaders 
@@ -181,32 +154,23 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
     }
     
     const analysis = data.choices[0].message.content.trim();
-    console.log('📊 Analyse brute OpenAI:', analysis);
+    console.log('📊 Analyse brute:', analysis);
     
-    // Extraction du nombre
     let value = null;
     let status = 'unknown';
     
-    // Vérifier si "Non lisible"
-    if (analysis.toLowerCase().includes('non lisible') || 
-        analysis.toLowerCase().includes('pas lisible') ||
-        analysis.toLowerCase().includes('impossible') ||
-        analysis.toLowerCase().includes('error') ||
-        analysis.toLowerCase().includes('unable')) {
-      console.log('🔍 Image non lisible selon OpenAI');
-    } else {
-      // Chercher un nombre dans la réponse
+    // Extraction du nombre
+    if (!analysis.toLowerCase().includes('non lisible')) {
       const numberMatch = analysis.match(/\d+/);
       if (numberMatch) {
         value = parseInt(numberMatch[0]);
         console.log('🔢 Valeur numérique extraite:', value);
         
-        // Validation de la plage glycémique réaliste (20-600 mg/dL)
+        // Validation de la plage glycémique réaliste
         if (value >= 20 && value <= 600) {
-          // Déterminer le statut glycémique
           if (value < 70) status = 'hypo';
           else if (value <= 126) status = 'normal';
-          else if (value <= 140) status = 'hyper';
+          else if (value <= 200) status = 'hyper';
           else status = 'severe';
           
           console.log('🎯 Statut glycémique:', status);
@@ -214,8 +178,6 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
           console.log('⚠️ Valeur hors plage réaliste:', value);
           value = null;
         }
-      } else {
-        console.log('🔍 Aucun nombre détecté dans la réponse');
       }
     }
 
@@ -228,7 +190,7 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
       message: value ? `Glycémie: ${value} mg/dL (${status})` : 'Image non lisible'
     };
     
-    console.log('🎉 Résultat final de l\'analyse:', result);
+    console.log('🎉 Résultat final:', result);
     
     return new Response(JSON.stringify(result), { 
       status: 200,
@@ -236,7 +198,7 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
     });
 
   } catch (error) {
-    console.error('💥 Erreur critique analyse:', error);
+    console.error('💥 Erreur critique:', error);
     
     return new Response(JSON.stringify({
       success: false,
