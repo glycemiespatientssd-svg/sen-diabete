@@ -468,7 +468,7 @@
         </div>
     </div>
 
-    <!-- Modal Gestion Licence -->
+    <!-- Modal Gestion Licence SIMPLIFIÉ -->
     <div class="modal fade" id="licenseModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -488,16 +488,22 @@
                         </div>
                     </div>
 
-                    <h5 class="mb-3">Choisir votre pack</h5>
+                    <h5 class="mb-3">Demander une licence</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Processus simplifié :</strong> Choisissez votre pack, nous vous contactons pour finaliser l'activation.
+                    </div>
+                    
                     <div class="row" id="packagesContainer">
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 text-center">
                                 <div class="card-body">
                                     <h5 class="card-title">Basique</h5>
                                     <h3 class="text-primary">5.000 FCFA</h3>
-                                    <p class="text-muted">20 photos</p>
-                                    <button class="btn btn-outline-primary" onclick="selectPackage('basic')">
-                                        Choisir
+                                    <p class="text-muted">20 photos/mois</p>
+                                    <p class="small text-muted">Parfait pour débuter</p>
+                                    <button class="btn btn-outline-primary" onclick="requestLicense('basic')">
+                                        <i class="fas fa-paper-plane me-2"></i>Demander
                                     </button>
                                 </div>
                             </div>
@@ -508,9 +514,10 @@
                                     <span class="badge bg-warning">Populaire</span>
                                     <h5 class="card-title">Professionnel</h5>
                                     <h3 class="text-primary">20.000 FCFA</h3>
-                                    <p class="text-muted">250 photos</p>
-                                    <button class="btn btn-primary" onclick="selectPackage('pro')">
-                                        Choisir
+                                    <p class="text-muted">250 photos/mois</p>
+                                    <p class="small text-muted">Idéal pour usage régulier</p>
+                                    <button class="btn btn-primary" onclick="requestLicense('pro')">
+                                        <i class="fas fa-paper-plane me-2"></i>Demander
                                     </button>
                                 </div>
                             </div>
@@ -518,16 +525,70 @@
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 text-center">
                                 <div class="card-body">
-                                    <h5 class="card-title">Illimité</h5>
+                                    <h5 class="card-title">Structure Santé</h5>
                                     <h3 class="text-primary">250.000 FCFA</h3>
-                                    <p class="text-muted">Photos illimitées</p>
-                                    <button class="btn btn-outline-primary" onclick="selectPackage('enterprise')">
-                                        Choisir
+                                    <p class="text-muted">Illimité 1 an</p>
+                                    <p class="small text-muted">Pour hôpitaux & cliniques</p>
+                                    <button class="btn btn-outline-primary" onclick="requestLicense('enterprise')">
+                                        <i class="fas fa-paper-plane me-2"></i>Demander
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Informations de contact -->
+                    <div class="card mt-4">
+                        <div class="card-body text-center">
+                            <h6><i class="fas fa-headset me-2"></i>Support SEN'Diabète</h6>
+                            <p class="mb-2">
+                                <i class="fab fa-whatsapp me-2 text-success"></i>
+                                <a href="https://wa.me/221781234567" target="_blank">+221 78 123 45 67</a>
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-envelope me-2 text-primary"></i>
+                                <a href="mailto:contact@sendiabete.com">contact@sendiabete.com</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Demande Licence -->
+    <div class="modal fade" id="licenseRequestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Demande de licence envoyée !</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>Demande bien reçue</h5>
+                    <p class="mb-3">Votre demande de licence <strong id="requestedPackage"></strong> a été envoyée à l'équipe SEN'Diabète.</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Prochaines étapes :</strong>
+                        <ul class="text-start mt-2">
+                            <li>Nous vous contactons sous 24h</li>
+                            <li>Envoi du lien de paiement sécurisé</li>
+                            <li>Activation immédiate après paiement</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" onclick="openWhatsAppContact()">
+                            <i class="fab fa-whatsapp me-2"></i>Nous contacter sur WhatsApp
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="sendEmailRequest()">
+                            <i class="fas fa-envelope me-2"></i>Envoyer par email
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                 </div>
             </div>
         </div>
@@ -1296,27 +1357,8 @@ Ne tardez pas, votre santé est en jeu.`
             `;
         }
 
-        function selectPackage(packageId) {
-            const packageInfo = LICENSE_PACKAGES[packageId];
-            const expiryDate = new Date();
-            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-            
-            appState.license = {
-                type: packageId,
-                photosUsed: 0,
-                photosTotal: packageInfo.photos,
-                expiryDate: expiryDate.toISOString()
-            };
-            
-            saveState();
-            updateUI();
-            
-            bootstrap.Modal.getInstance(document.getElementById('licenseModal')).hide();
-            alert(`Licence ${getLicenseTypeName(packageId)} activée !`);
-        }
-
         function getLicenseTypeName(type) {
-            const names = { 'basic': 'Basique', 'pro': 'Professionnel', 'enterprise': 'Illimité' };
+            const names = { 'basic': 'Basique', 'pro': 'Professionnel', 'enterprise': 'Structure Santé' };
             return names[type] || 'Aucune';
         }
 
@@ -1358,7 +1400,104 @@ Ne tardez pas, votre santé est en jeu.`
             }
         }
 
-        // ========== NOUVELLES FONCTIONNALITÉS ==========
+        // ========== SYSTÈME DE LICENCE SIMPLIFIÉ ==========
+
+        function requestLicense(packageType) {
+            const packageInfo = LICENSE_PACKAGES[packageType];
+            const user = appState.user;
+            
+            // Sauvegarder la demande
+            const licenseRequest = {
+                id: Date.now(),
+                doctorName: user.name,
+                doctorEmail: user.email,
+                packageType: packageType,
+                packageName: getLicenseTypeName(packageType),
+                price: packageInfo.price,
+                photos: packageInfo.photos,
+                requestedAt: new Date().toISOString(),
+                status: 'pending'
+            };
+            
+            // Sauvegarder la demande localement
+            saveLicenseRequest(licenseRequest);
+            
+            // Afficher la confirmation
+            document.getElementById('requestedPackage').textContent = getLicenseTypeName(packageType);
+            const modal = new bootstrap.Modal(document.getElementById('licenseRequestModal'));
+            modal.show();
+            
+            // Fermer le modal de licence
+            bootstrap.Modal.getInstance(document.getElementById('licenseModal')).hide();
+            
+            // Envoyer notification automatique
+            sendLicenseNotification(licenseRequest);
+        }
+
+        function saveLicenseRequest(request) {
+            let requests = JSON.parse(localStorage.getItem('licenseRequests') || '[]');
+            requests.push(request);
+            localStorage.setItem('licenseRequests', JSON.stringify(requests));
+        }
+
+        function sendLicenseNotification(licenseRequest) {
+            const message = `📋 NOUVELLE DEMANDE DE LICENCE SEN'Diabète
+
+👨‍⚕️ Médecin: ${licenseRequest.doctorName}
+📧 Email: ${licenseRequest.doctorEmail}
+📦 Pack: ${licenseRequest.packageName}
+💰 Prix: ${licenseRequest.price.toLocaleString()} FCFA
+📸 Photos: ${licenseRequest.photos}/mois
+⏰ Demandé le: ${new Date(licenseRequest.requestedAt).toLocaleString('fr-FR')}
+
+Merci de contacter ce médecin pour finaliser l'activation.`;
+
+            // URL WhatsApp pour notification admin
+            const whatsappUrl = `https://wa.me/221781234567?text=${encodeURIComponent(message)}`;
+            
+            // Ouvrir en nouvel onglet (silencieusement)
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function openWhatsAppContact() {
+            const message = `Bonjour SEN'Diabète 👋
+
+Je souhaite obtenir des informations sur les licences.
+Nom: ${appState.user.name}
+Email: ${appState.user.email}
+
+Merci de me recontacter.`;
+            
+            const whatsappUrl = `https://wa.me/221781234567?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function sendEmailRequest() {
+            const subject = `Demande Licence SEN'Diabète - ${appState.user.name}`;
+            const body = `Bonjour,
+
+Je suis intéressé(e) par une licence SEN'Diabète.
+
+Informations :
+- Nom : ${appState.user.name}
+- Email : ${appState.user.email}
+- Téléphone : [à compléter]
+
+Merci de me recontacter pour finaliser l'inscription.
+
+Cordialement,
+${appState.user.name}`;
+
+            const mailtoUrl = `mailto:contact@sendiabete.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+
+        // Fonction de compatibilité (gardée pour ne rien casser)
+        function selectPackage(packageId) {
+            requestLicense(packageId);
+        }
+
+        // ========== FONCTIONNALITÉS EXISTANTES ==========
 
         // Fonction pour ouvrir le modal WhatsApp
         function openWhatsApp(analysis) {
