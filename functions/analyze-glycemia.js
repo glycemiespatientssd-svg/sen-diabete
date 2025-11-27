@@ -1,4 +1,3 @@
-// functions/analyze-glycemia.js
 export async function onRequestPost(context) {
   const { request, env } = context;
   
@@ -6,7 +5,7 @@ export async function onRequestPost(context) {
   
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
@@ -57,11 +56,10 @@ export async function onRequestPost(context) {
 
     const OPENAI_API_KEY = env.OPENAI_API_KEY;
     
-    // DEBUG - Log pour voir si la clé est présente
-    console.log('🔑 Clé API OpenAI:', OPENAI_API_KEY ? `Présente (${OPENAI_API_KEY.length} caractères)` : 'MANQUANTE');
+    console.log('🔑 Clé API OpenAI:', OPENAI_API_KEY ? `Présente (${OPENAI_API_KEY.substring(0, 10)}...)` : 'MANQUANTE');
     
     if (!OPENAI_API_KEY) {
-      console.error('❌ CLÉ API OPENAI MANQUANTE dans les variables d\'environnement');
+      console.error('❌ CLÉ API OPENAI MANQUANTE');
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Configuration serveur incomplète - Clé API manquante' 
@@ -146,6 +144,7 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
           errorMessage = `OpenAI: ${errorData.error.message}`;
         }
         
+        // Gestion des erreurs spécifiques
         if (apiResponse.status === 401) {
           errorMessage = 'Clé API OpenAI invalide ou expirée';
         } else if (apiResponse.status === 429) {
@@ -156,19 +155,29 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
           errorMessage = 'Modèle GPT-4 Vision non disponible - Vérifiez votre abonnement';
         }
       } catch (parseError) {
-        const errorText = await apiResponse.text();
-        console.error('❌ Erreur parsing réponse:', errorText);
-        errorMessage = `Erreur API: ${apiResponse.status} - ${errorText.substring(0, 100)}`;
+        console.error('❌ Erreur parsing réponse:', parseError);
       }
       
-      throw new Error(errorMessage);
+      return new Response(JSON.stringify({
+        success: false,
+        error: errorMessage
+      }), { 
+        status: 500, 
+        headers: corsHeaders 
+      });
     }
 
     const data = await apiResponse.json();
     console.log('✅ Réponse OpenAI reçue avec succès');
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Réponse OpenAI invalide - structure de données incorrecte');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Réponse OpenAI invalide'
+      }), { 
+        status: 500, 
+        headers: corsHeaders 
+      });
     }
     
     const analysis = data.choices[0].message.content.trim();
@@ -182,7 +191,8 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
     if (analysis.toLowerCase().includes('non lisible') || 
         analysis.toLowerCase().includes('pas lisible') ||
         analysis.toLowerCase().includes('impossible') ||
-        analysis.toLowerCase().includes('error')) {
+        analysis.toLowerCase().includes('error') ||
+        analysis.toLowerCase().includes('unable')) {
       console.log('🔍 Image non lisible selon OpenAI');
     } else {
       // Chercher un nombre dans la réponse
@@ -196,7 +206,7 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
           // Déterminer le statut glycémique
           if (value < 70) status = 'hypo';
           else if (value <= 126) status = 'normal';
-          else if (value <= 200) status = 'hyper';
+          else if (value <= 140) status = 'hyper';
           else status = 'severe';
           
           console.log('🎯 Statut glycémique:', status);
@@ -215,7 +225,7 @@ NE RETOURNE QUE LE NOMBRE OU "NON LISIBLE". RIEN D'AUTRE.`;
       status: status,
       unit: 'mg/dL',
       rawResponse: analysis,
-      message: value ? `Glycémie: ${value} mg/dL (${status})` : 'Non lisible'
+      message: value ? `Glycémie: ${value} mg/dL (${status})` : 'Image non lisible'
     };
     
     console.log('🎉 Résultat final de l\'analyse:', result);
