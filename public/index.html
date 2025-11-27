@@ -134,6 +134,36 @@
             margin-bottom: 1rem;
             border-left: 4px solid var(--primary-color);
         }
+        
+        /* Styles pour l'export */
+        .report-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        @media print {
+            .report-content {
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .btn, .modal, .sidebar, .navbar {
+                display: none !important;
+            }
+        }
+        
+        /* Bouton WhatsApp */
+        .btn-success {
+            background-color: #25D366;
+            border-color: #25D366;
+        }
+        
+        .btn-success:hover {
+            background-color: #128C7E;
+            border-color: #128C7E;
+        }
     </style>
 </head>
 <body>
@@ -169,6 +199,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="showSection('patients')">
                                 <i class="fas fa-table"></i> Données patients
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('export')">
+                                <i class="fas fa-file-export"></i> Export/Impression
                             </a>
                         </li>
                         <li class="nav-item">
@@ -355,6 +390,80 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Section Export -->
+                <div id="exportSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h4 mb-0">Export et Impression des Données</h2>
+                        <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </button>
+                    </div>
+
+                    <div class="row">
+                        <!-- Export Journalier -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fas fa-calendar-day me-2"></i>Export Journalier
+                                </div>
+                                <div class="card-body">
+                                    <p>Export de toutes les analyses d'une journée spécifique.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Date à exporter</label>
+                                        <input type="date" class="form-control" id="exportDate">
+                                    </div>
+                                    <button class="btn btn-primary w-100" onclick="generateDailyReport()">
+                                        <i class="fas fa-download me-2"></i>Générer Rapport Journalier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export par Patient -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-user me-2"></i>Export par Patient
+                                </div>
+                                <div class="card-body">
+                                    <p>Export complet des données d'un patient spécifique.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Sélectionner un patient</label>
+                                        <select class="form-control" id="exportPatient">
+                                            <option value="">Choisir un patient...</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-success w-100" onclick="generatePatientReport()">
+                                        <i class="fas fa-file-medical me-2"></i>Générer Fiche Patient
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rapport en cours -->
+                    <div id="reportContainer" style="display: none;">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Rapport Généré</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="printReport()">
+                                        <i class="fas fa-print me-1"></i>Imprimer
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="saveAsPDF()">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="reportContent">
+                                    <!-- Contenu du rapport généré -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -518,6 +627,54 @@
         </div>
     </div>
 
+    <!-- Modal Envoi WhatsApp -->
+    <div class="modal fade" id="whatsappModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Envoyer message au patient</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Patient</label>
+                        <input type="text" class="form-control" id="whatsappPatient" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dernière glycémie</label>
+                        <input type="text" class="form-control" id="whatsappGlycemie" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Numéro WhatsApp</label>
+                        <input type="tel" class="form-control" id="whatsappNumber" placeholder="Ex: +221701234567" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message prédéfini</label>
+                        <select class="form-control" id="whatsappMessage">
+                            <option value="">Choisir un message...</option>
+                            <option value="hypo">🔻 Hypoglycémie - Consulter rapidement</option>
+                            <option value="normal">✅ Glycémie normale - Continuer surveillance</option>
+                            <option value="hyper">🔺 Hyperglycémie - Ajuster traitement</option>
+                            <option value="severe">🚨 Glycémie sévère - Urgence médicale</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="includeDetails">
+                        <label class="form-check-label" for="includeDetails">
+                            Inclure les détails de la mesure
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" onclick="sendWhatsApp()">
+                        <i class="fab fa-whatsapp me-2"></i>Ouvrir WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Vérification STRICTE de l'authentification au chargement
@@ -577,6 +734,52 @@
             'basic': { photos: 20, price: 5000 },
             'pro': { photos: 250, price: 20000 },
             'enterprise': { photos: 9999, price: 250000 }
+        };
+
+        // Messages WhatsApp prédéfinis
+        const WHATSAPP_MESSAGES = {
+            'hypo': `🔻 URGENCE HYPOGLYCÉMIE
+
+Votre dernière mesure glycémique indique une hypoglycémie. 
+
+🔸 Consommez immédiatement 15g de sucre rapide
+🔸 Contrôlez à nouveau dans 15 minutes
+🔸 Contactez votre médecin si persistant
+
+Restez vigilant et surveillez vos symptômes.`,
+
+            'normal': `✅ GLYCÉMIE NORMALE
+
+Votre dernière mesure glycémique est dans les valeurs normales.
+
+🎯 Excellent travail ! Continuez à :
+• Maintenir vos bonnes habitudes
+• Surveiller régulièrement
+• Respecter votre traitement
+
+Gardez le cap !`,
+
+            'hyper': `🔺 HYPERGLYCÉMIE
+
+Votre dernière mesure glycémique est élevée.
+
+📋 Recommandations :
+• Vérifiez votre alimentation
+• Hydratez-vous suffisamment
+• Contrôlez à nouveau dans 2h
+• Contactez votre médecin pour ajustement
+
+Surveillance renforcée recommandée.`,
+
+            'severe': `🚨 URGENCE MÉDICALE - HYPERGLYCÉMIE SÉVÈRE
+
+Votre mesure glycémique nécessite une attention médicale immédiate.
+
+⚠️ CONSULTEZ RAPIDEMENT :
+• Votre médecin traitant
+• Ou les urgences médicales
+
+Ne tardez pas, votre santé est en jeu.`
         };
 
         let appState = {
@@ -1006,7 +1209,7 @@
                 return;
             }
             
-            let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Patient</th><th>Photo</th><th>Date</th><th>Valeur</th><th>Statut</th></tr></thead><tbody>';
+            let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Patient</th><th>Photo</th><th>Date</th><th>Valeur</th><th>Statut</th><th>Actions</th></tr></thead><tbody>';
             recent.forEach(analysis => {
                 const patient = appState.patients.find(p => p.id === analysis.patientId) || { name: 'Inconnu' };
                 html += `
@@ -1019,6 +1222,11 @@
                         <td>${analysis.date}</td>
                         <td>${analysis.value}</td>
                         <td><span class="status-badge status-${analysis.status}">${getStatusText(analysis.status)}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="openWhatsApp(${JSON.stringify(analysis).replace(/"/g, '&quot;')})" title="Envoyer message WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -1131,6 +1339,11 @@
                 document.getElementById('selectedFilesContainer').style.display = 'none';
                 selectedFiles = [];
             }
+            
+            // Initialiser la section export si nécessaire
+            if (sectionName === 'export') {
+                initializeExportSection();
+            }
         }
 
         function saveState() {
@@ -1143,6 +1356,336 @@
                 localStorage.removeItem('currentUserEmail');
                 window.location.href = '/login.html';
             }
+        }
+
+        // ========== NOUVELLES FONCTIONNALITÉS ==========
+
+        // Fonction pour ouvrir le modal WhatsApp
+        function openWhatsApp(analysis) {
+            const patient = appState.patients.find(p => p.id === analysis.patientId);
+            if (!patient) return;
+            
+            document.getElementById('whatsappPatient').value = patient.name;
+            document.getElementById('whatsappGlycemie').value = analysis.value;
+            document.getElementById('whatsappNumber').value = '';
+            document.getElementById('whatsappMessage').value = '';
+            document.getElementById('includeDetails').checked = true;
+            
+            // Stocker l'analyse courante
+            window.currentAnalysis = analysis;
+            
+            const modal = new bootstrap.Modal(document.getElementById('whatsappModal'));
+            modal.show();
+        }
+
+        // Fonction d'envoi WhatsApp
+        function sendWhatsApp() {
+            const phoneNumber = document.getElementById('whatsappNumber').value;
+            const messageType = document.getElementById('whatsappMessage').value;
+            const includeDetails = document.getElementById('includeDetails').checked;
+            
+            if (!phoneNumber) {
+                alert('Veuillez entrer un numéro de téléphone');
+                return;
+            }
+            
+            if (!messageType) {
+                alert('Veuillez sélectionner un message');
+                return;
+            }
+            
+            let message = WHATSAPP_MESSAGES[messageType];
+            
+            if (includeDetails && window.currentAnalysis) {
+                const analysis = window.currentAnalysis;
+                const patient = appState.patients.find(p => p.id === analysis.patientId);
+                
+                message += `\n\n📊 DÉTAILS DE LA MESURE :
+Patient: ${patient.name}
+Glycémie: ${analysis.value}
+Date: ${analysis.date}
+Statut: ${getStatusText(analysis.status)}`;
+            }
+            
+            // Encoder le message pour URL
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\s/g, '')}?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+            // Fermer le modal
+            bootstrap.Modal.getInstance(document.getElementById('whatsappModal')).hide();
+        }
+
+        // Initialisation de l'export
+        function initializeExportSection() {
+            const patientSelect = document.getElementById('exportPatient');
+            patientSelect.innerHTML = '<option value="">Choisir un patient...</option>';
+            
+            appState.patients.forEach(patient => {
+                patientSelect.innerHTML += `<option value="${patient.id}">${patient.name}</option>`;
+            });
+            
+            // Date du jour par défaut
+            document.getElementById('exportDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Fonctions d'export
+        function generateDailyReport() {
+            const selectedDate = document.getElementById('exportDate').value;
+            if (!selectedDate) {
+                alert('Veuillez sélectionner une date');
+                return;
+            }
+            
+            const dailyAnalyses = appState.analyses.filter(analysis => {
+                const analysisDate = new Date(analysis.date.split(' ')[0]).toISOString().split('T')[0];
+                return analysisDate === selectedDate;
+            });
+            
+            if (dailyAnalyses.length === 0) {
+                alert('Aucune analyse trouvée pour cette date');
+                return;
+            }
+            
+            const reportHTML = createDailyReportHTML(dailyAnalyses, selectedDate);
+            document.getElementById('reportContent').innerHTML = reportHTML;
+            document.getElementById('reportContainer').style.display = 'block';
+            
+            // Scroll vers le rapport
+            document.getElementById('reportContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generatePatientReport() {
+            const patientId = document.getElementById('exportPatient').value;
+            if (!patientId) {
+                alert('Veuillez sélectionner un patient');
+                return;
+            }
+            
+            const patient = appState.patients.find(p => p.id == patientId);
+            const patientAnalyses = appState.analyses.filter(analysis => analysis.patientId == patientId);
+            
+            if (patientAnalyses.length === 0) {
+                alert('Aucune analyse trouvée pour ce patient');
+                return;
+            }
+            
+            const reportHTML = createPatientReportHTML(patient, patientAnalyses);
+            document.getElementById('reportContent').innerHTML = reportHTML;
+            document.getElementById('reportContainer').style.display = 'block';
+            
+            // Scroll vers le rapport
+            document.getElementById('reportContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Templates de rapports
+        function createDailyReportHTML(analyses, date) {
+            const doctor = appState.user;
+            const formattedDate = new Date(date).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            return `
+                <div id="dailyReport" class="report-content">
+                    <div class="text-center mb-4">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <img src="https://i.postimg.cc/pThbptsh/Logo-V2.png" alt="SEN'Diabète" style="height: 60px; margin-right: 15px;">
+                            <h2>SEN'Diabète - Rapport Journalier</h2>
+                        </div>
+                        <p class="lead">Rapport des analyses glycémiques du ${formattedDate}</p>
+                        <p><strong>Médecin:</strong> ${doctor.name} | <strong>Date d'extraction:</strong> ${new Date().toLocaleString('fr-FR')}</p>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Type Diabète</th>
+                                    <th>Traitement</th>
+                                    <th>Heure</th>
+                                    <th>Glycémie</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${analyses.map(analysis => {
+                                    const patient = appState.patients.find(p => p.id === analysis.patientId);
+                                    return `
+                                        <tr>
+                                            <td>${patient?.name || 'Inconnu'}</td>
+                                            <td>${patient?.diabetesType || 'N/A'}</td>
+                                            <td>${patient?.treatment || 'N/A'}</td>
+                                            <td>${analysis.date.split(' ')[1]}</td>
+                                            <td>${analysis.value}</td>
+                                            <td><span class="status-badge status-${analysis.status}">${getStatusText(analysis.status)}</span></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">${analyses.length}</h5>
+                                    <p class="card-text">Analyses Total</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success">${analyses.filter(a => a.status === 'normal').length}</h5>
+                                    <p class="card-text">Normales</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-warning">${analyses.filter(a => a.status === 'hyper').length}</h5>
+                                    <p class="card-text">Hyperglycémies</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">${analyses.filter(a => a.status === 'hypo').length}</h5>
+                                    <p class="card-text">Hypoglycémies</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPatientReportHTML(patient, analyses) {
+            const doctor = appState.user;
+            
+            return `
+                <div id="patientReport" class="report-content">
+                    <div class="text-center mb-4">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <img src="https://i.postimg.cc/pThbptsh/Logo-V2.png" alt="SEN'Diabète" style="height: 60px; margin-right: 15px;">
+                            <h2>SEN'Diabète - Fiche Patient</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">Informations Patient</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Nom complet:</strong> ${patient.name}</p>
+                                    <p><strong>Date de naissance:</strong> ${patient.birthDate ? new Date(patient.birthDate).toLocaleDateString('fr-FR') : 'Non renseignée'}</p>
+                                    <p><strong>Type de diabète:</strong> ${patient.diabetesType}</p>
+                                    <p><strong>Traitement actuel:</strong> ${patient.treatment}</p>
+                                    ${patient.notes ? `<p><strong>Notes médicales:</strong> ${patient.notes}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">Informations Médecin</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Médecin traitant:</strong> ${doctor.name}</p>
+                                    <p><strong>Date d'extraction:</strong> ${new Date().toLocaleString('fr-FR')}</p>
+                                    <p><strong>Nombre d'analyses:</strong> ${analyses.length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mb-3">Historique des Analyses Glycémiques</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Date et Heure</th>
+                                    <th>Photo</th>
+                                    <th>Glycémie</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${analyses.map(analysis => `
+                                    <tr>
+                                        <td>${analysis.date}</td>
+                                        <td><img src="${analysis.thumbnail}" class="thumbnail-img"></td>
+                                        <td>${analysis.value}</td>
+                                        <td><span class="status-badge status-${analysis.status}">${getStatusText(analysis.status)}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">${analyses.length}</h5>
+                                    <p class="card-text">Analyses Total</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success">${analyses.filter(a => a.status === 'normal').length}</h5>
+                                    <p class="card-text">Normales</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-warning">${analyses.filter(a => a.status === 'hyper').length}</h5>
+                                    <p class="card-text">Hyperglycémies</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">${analyses.filter(a => a.status === 'hypo').length}</h5>
+                                    <p class="card-text">Hypoglycémies</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fonctions d'impression et PDF
+        function printReport() {
+            const reportElement = document.querySelector('.report-content');
+            const originalContents = document.body.innerHTML;
+            
+            document.body.innerHTML = reportElement.innerHTML;
+            window.print();
+            document.body.innerHTML = originalContents;
+            
+            // Recharger l'application
+            window.location.reload();
+        }
+
+        function saveAsPDF() {
+            alert('Fonction PDF - À intégrer avec une bibliothèque comme jsPDF\n\nPour le moment, utilisez la fonction d\'impression et choisir "Enregistrer au format PDF" dans les options d\'impression.');
         }
     </script>
 </body>
